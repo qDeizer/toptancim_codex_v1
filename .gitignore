@@ -1,0 +1,56 @@
+# Backend
+backend/node_modules/
+backend/uploads/
+backend/.env
+backend/config/ai-settings.local.json
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/.pub-cache/
+frontend/.pub/
+
+# IDE
+.vscode/
+.idea/
+.claude/*.local.json
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+tmp/
+
+# Generated caches
+__pycache__/
+*.pyc
+
+# Local deployment metadata
+backend/.azure/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+db/.env
+backend/yedek.sql
+backend/db/yedek.sql
+
+# Local environment files
+.env
+**/.env.local
+
+# Generated project snapshots
+ProjectSnapshot_v*.txt
