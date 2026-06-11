@@ -36,7 +36,9 @@ module.exports = {
         });
 
         io.on('connection', (socket) => {
-            const userId = socket.decoded_token.id;
+            // JWT payload'ı { user: { id, role } } şeklinde imzalanıyor (authController);
+            // düz .id okunursa oda adı user_undefined olur ve hedefli emitler ulaşmaz
+            const userId = socket.decoded_token.user?.id || socket.decoded_token.id;
             logger.info('Client connected', { socketId: socket.id, userId });
 
             // Automatic Join on connection

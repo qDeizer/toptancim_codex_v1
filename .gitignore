@@ -57,3 +57,6 @@ ProjectSnapshot_v*.txt
 
 # Sunucu sifresi iceren deploy scriptleri
 deploy_*.py
+deploy_kahraman.py
+deploy_final*.py
+deploy_poll.py

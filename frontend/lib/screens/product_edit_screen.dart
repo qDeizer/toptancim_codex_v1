@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/models/category.dart';
-import 'package:frontend/models/connection.dart';
 import 'package:frontend/models/product.dart';
 import 'package:frontend/providers/category_provider.dart';
 import 'package:frontend/providers/connection_provider.dart';
 import 'package:frontend/providers/product_provider.dart';
-import 'package:frontend/providers/media_provider.dart';
-import 'package:frontend/models/media.dart';
 import 'package:frontend/services/image_service.dart';
+import 'package:frontend/widgets/media_picker_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
@@ -463,20 +460,20 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
           ),
         const SizedBox(height: 8),
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => _addSingleImage(variant),
-                icon: const Icon(Icons.add_a_photo),
-                label: const Text('Resim Ekle'),
-              ),
-            ),
+            _buildMiniBtn(Icons.camera_alt, 'Kamera', () => _addSingleImage(variant)),
             const SizedBox(width: 8),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => _addMultipleImages(variant),
-                icon: const Icon(Icons.add_photo_alternate),
-                label: const Text('Çoklu Resim'),
+            _buildMiniBtn(Icons.photo_library, 'Galeri', () => _addMultipleImages(variant)),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: () => _addFromMedia(variant),
+              icon: const Icon(Icons.auto_awesome, size: 16, color: Colors.deepPurple),
+              label: const Text('Medyadan', style: TextStyle(fontSize: 12)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.deepPurple,
+                side: BorderSide(color: Colors.deepPurple.withValues(alpha: 0.4)),
+                visualDensity: VisualDensity.compact,
               ),
             ),
           ],
@@ -485,40 +482,42 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
     );
   }
 
-  Future<void> _addFromMedia(ProductVariant variant) async {
-    final media = context.read<MediaProvider>().media;
-    if (!mounted) return;
-    final selected = await showDialog<MediaItem>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Medyadan Seç'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: GridView.builder(
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 4, mainAxisSpacing: 4),
-            itemCount: media.length,
-            itemBuilder: (_, i) {
-              final item = media[i];
-              return GestureDetector(
-                onTap: () => Navigator.pop(ctx, item),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(ImageService.getFullImageUrl(item.url), fit: BoxFit.cover),
-                ),
-              );
-            },
-          ),
+  Widget _buildMiniBtn(IconData icon, String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          borderRadius: BorderRadius.circular(12),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal'))],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 4),
+            Text(label, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
       ),
     );
-    if (selected != null) {
-      setState(() {
-        variant.images ??= [];
-        variant.images!.add(selected.url);
-      });
-    }
+  }
+
+  Future<void> _addFromMedia(ProductVariant variant) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => MediaPickerSheet(
+        onSelected: (urls) {
+          setState(() {
+            variant.images ??= [];
+            variant.images!.addAll(urls);
+          });
+        },
+      ),
+    );
   }
 
   Future<void> _addSingleImage(ProductVariant variant) async {

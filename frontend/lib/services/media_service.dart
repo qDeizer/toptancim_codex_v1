@@ -4,6 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/media.dart';
 import '../utils/constants.dart';
 
+class MediaInUseException implements Exception {
+  final String message;
+  final List<Map<String, dynamic>> usedIn;
+  const MediaInUseException(this.message, this.usedIn);
+  @override
+  String toString() => 'MediaInUseException: $message';
+}
+
 class MediaService {
   static String get baseUrl => Constants.baseUrl;
 
@@ -46,13 +54,21 @@ class MediaService {
     return MediaItem.fromJson(json.decode(res.body));
   }
 
-  Future<void> deleteMedia(String mediaId) async {
+  Future<void> deleteMedia(String mediaId, {bool force = false}) async {
     final headers = await _authHeaders();
-    final res = await http.delete(Uri.parse('$baseUrl/media/$mediaId'), headers: headers);
-    if (res.statusCode != 200) throw Exception('Silme başarısız');
+    final uri = Uri.parse('$baseUrl/media/$mediaId${force ? '?force=true' : ''}');
+    final res = await http.delete(uri, headers: headers);
+    final data = json.decode(res.body);
+    if (res.statusCode == 409) {
+      throw MediaInUseException(
+        data['message'] ?? 'Bu görsel ürünlerde kullanılıyor',
+        List<Map<String, dynamic>>.from(data['used_in'] ?? []),
+      );
+    }
+    if (res.statusCode != 200) throw Exception(data['message'] ?? 'Silme başarısız');
   }
 
-  // AI görsel oluşturma
+  // AI görsel oluşturma (async — 202 döner)
   Future<List<MediaItem>> generateAiImages({
     required String prompt,
     int n = 1,
@@ -75,9 +91,10 @@ class MediaService {
       body: body,
     );
     final data = json.decode(res.body);
-    if (res.statusCode != 200) throw Exception(data['message'] ?? 'AI görsel oluşturulamadı');
+    if (res.statusCode != 200 && res.statusCode != 202) {
+      throw Exception(data['message'] ?? 'AI görsel oluşturulamadı');
+    }
     final images = data['images'] as List;
     return images.map((j) => MediaItem.fromJson(j)).toList();
   }
 }
-
