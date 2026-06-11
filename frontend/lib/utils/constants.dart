@@ -7,8 +7,13 @@ class Constants {
   // Lokal Geliştirme - Platform-specific base URLs
   static String get baseUrl {
     if (kIsWeb) {
-      // Web platforms (Chrome, Edge, etc.)
-      return 'http://localhost:3002/api';
+      // Lokal geliştirmede backend'e doğrudan, sunucuda nginx /api proxy'si
+      // üzerinden aynı origin'e bağlan
+      final host = Uri.base.host;
+      if (host == 'localhost' || host == '127.0.0.1') {
+        return 'http://localhost:3002/api';
+      }
+      return '${Uri.base.origin}/api';
     }
 
     switch (defaultTargetPlatform) {

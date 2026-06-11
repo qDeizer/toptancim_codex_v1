@@ -10,6 +10,7 @@ import 'package:frontend/providers/tag_assignment_provider.dart';
 import 'package:frontend/providers/tag_provider.dart';
 import 'package:frontend/providers/transaction_provider.dart';
 import 'package:frontend/providers/wholesaler_order_provider.dart';
+import 'package:frontend/providers/media_provider.dart';
 import 'package:frontend/screens/home_screen.dart';
 import 'package:frontend/screens/login_screen.dart';
 import 'package:frontend/providers/ai_provider.dart';
@@ -76,6 +77,10 @@ class MyApp extends StatelessWidget {
             provider.updateAuth(auth.token);
             return provider;
           },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, MediaProvider>(
+          create: (ctx) => MediaProvider(),
+          update: (ctx, auth, previous) => previous ?? MediaProvider(),
         ),
         ChangeNotifierProxyProvider<AuthProvider, WholesalerOrderProvider>(
           create: (ctx) => WholesalerOrderProvider(null),
@@ -154,3 +159,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

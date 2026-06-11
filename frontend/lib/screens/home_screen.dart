@@ -15,6 +15,8 @@ import 'package:frontend/screens/products_screen.dart';
 import 'package:frontend/screens/profile_view_screen.dart';
 import 'package:frontend/screens/settings_screen.dart';
 import 'package:frontend/screens/shop_screen.dart';
+import 'package:frontend/screens/media_screen.dart';
+import 'package:frontend/providers/media_provider.dart';
 import 'package:frontend/screens/wholesaler_orders_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<NotificationProvider>().fetchNotifications(),
       context.read<CartProvider>().fetchMyCarts(),
       context.read<ConnectionProvider>().fetchConnections(),
+      context.read<MediaProvider>().fetchMedia(refresh: true),
       context.read<TransactionProvider>().fetchAllFinancialData(),
       context.read<WholesalerOrderProvider>().fetchWholesalerOrders(),
     ]);
@@ -88,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'Kişi ve ürün bazlı analiz akışları.', AnalysisHubScreen()),
       _ModuleItem(Icons.dashboard_customize_outlined, 'Dashboard',
           'Geniş dashboard görünümü.', DashboardScreen()),
+      _ModuleItem(Icons.perm_media_outlined, 'Medya', 'Görsel arşiviniz ve AI görsel oluşturma.', MediaScreen()),
       _ModuleItem(Icons.storefront_outlined, 'Alışveriş',
           'Pazar ve ürün keşif ekranı.', ShopScreen()),
     ];
@@ -455,3 +459,5 @@ class _FocusRow {
   final String value;
   const _FocusRow(this.label, this.value);
 }
+
+

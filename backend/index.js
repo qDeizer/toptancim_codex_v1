@@ -24,6 +24,7 @@ const shopRoutes = require('./routes/shop');
 const cartRoutes = require('./routes/cart');
 const notificationRoutes = require('./routes/notifications');
 const aiRoutes = require('./routes/ai');
+const mediaRoutes = require('./routes/media');
 
 // Temporarily disable Swagger to identify the issue
 // const swaggerSpec = swaggerJsdoc({
@@ -86,6 +87,7 @@ app.use('/api/shop', shopRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/media', mediaRoutes);
 
 // Static file serving for uploads (Azure için UPLOADS_DIR ile override edilebilir)
 const uploadsDir = process.env.UPLOADS_DIR

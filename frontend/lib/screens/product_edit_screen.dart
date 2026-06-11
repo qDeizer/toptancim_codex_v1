@@ -5,6 +5,8 @@ import 'package:frontend/models/product.dart';
 import 'package:frontend/providers/category_provider.dart';
 import 'package:frontend/providers/connection_provider.dart';
 import 'package:frontend/providers/product_provider.dart';
+import 'package:frontend/providers/media_provider.dart';
+import 'package:frontend/models/media.dart';
 import 'package:frontend/services/image_service.dart';
 import 'package:provider/provider.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -481,6 +483,42 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _addFromMedia(ProductVariant variant) async {
+    final media = context.read<MediaProvider>().media;
+    if (!mounted) return;
+    final selected = await showDialog<MediaItem>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Medyadan Seç'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: GridView.builder(
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 4, mainAxisSpacing: 4),
+            itemCount: media.length,
+            itemBuilder: (_, i) {
+              final item = media[i];
+              return GestureDetector(
+                onTap: () => Navigator.pop(ctx, item),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(ImageService.getFullImageUrl(item.url), fit: BoxFit.cover),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal'))],
+      ),
+    );
+    if (selected != null) {
+      setState(() {
+        variant.images ??= [];
+        variant.images!.add(selected.url);
+      });
+    }
   }
 
   Future<void> _addSingleImage(ProductVariant variant) async {

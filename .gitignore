@@ -54,3 +54,6 @@ backend/db/yedek.sql
 
 # Generated project snapshots
 ProjectSnapshot_v*.txt
+
+# Sunucu sifresi iceren deploy scriptleri
+deploy_*.py
