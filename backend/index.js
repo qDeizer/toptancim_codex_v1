@@ -54,6 +54,8 @@ const mediaRoutes = require('./routes/media');
 app.use(cors({
   origin: [
     // Localhost adresleri (Codex Instance - Port 3002/8089)
+    'http://localhost',
+    'http://127.0.0.1',
     'http://localhost:3002',
     'http://localhost:8089',
     'http://127.0.0.1:3002',
