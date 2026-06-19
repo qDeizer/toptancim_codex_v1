@@ -6,7 +6,9 @@ const settingsPath = path.join(__dirname, '../../config/ai-settings.local.json')
 
 const defaultSettings = {
     strategy: 'AUTO',
-    geminiModel: 'gemini-2.5-flash',
+    // flash-lite, free-tier'da daha yuksek kapasiteli; gemini-2.5-flash sik sik
+    // "503 high demand" verdiginden varsayilan olarak lite tercih edildi.
+    geminiModel: 'gemini-2.5-flash-lite',
     fallbackToLocal: true,
     chatResetSeconds: 15,
     chatRequestTimeoutMs: 95000,
@@ -77,7 +79,7 @@ function normalizeSettings(settings = {}) {
 
     return {
         strategy: settings.strategy || 'AUTO',
-        geminiModel: settings.geminiModel || 'gemini-2.5-flash',
+        geminiModel: settings.geminiModel || 'gemini-2.5-flash-lite',
         fallbackToLocal: settings.fallbackToLocal !== false,
         chatResetSeconds: Number(settings.chatResetSeconds) > 0
             ? Number(settings.chatResetSeconds)

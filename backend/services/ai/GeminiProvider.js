@@ -42,7 +42,7 @@ class GeminiProvider extends AIInterface {
 
         this.apiKey = options.apiKey || process.env.GEMINI_API_KEY;
         this.label = options.label || 'gemini';
-        this.modelName = options.modelName || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+        this.modelName = options.modelName || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 
         if (!this.apiKey) {
             throw new Error('GEMINI_API_KEY tanimli degil.');
