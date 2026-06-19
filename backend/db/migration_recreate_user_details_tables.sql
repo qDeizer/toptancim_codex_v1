@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS account_movements CASCADE;
 -- account_movements tablosunu yeniden oluştur
 CREATE TABLE account_movements (
     movement_id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE UNIQUE,
     creation_date TIMESTAMPTZ NOT NULL,
     last_login TIMESTAMPTZ,
     last_failed_login TIMESTAMPTZ,
@@ -26,7 +26,7 @@ CREATE TABLE account_movements (
 -- address_info tablosunu istenen yeni yapıya göre yeniden oluştur
 CREATE TABLE address_info (
     address_id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE UNIQUE,
     address_title TEXT, -- Adres Başlığı
     address TEXT, -- Adres
     detailed_address TEXT, -- Açık Adres
