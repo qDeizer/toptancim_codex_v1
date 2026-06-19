@@ -629,6 +629,15 @@ class _SizeOption {
   const _SizeOption(this.value, this.label, this.icon);
 }
 
+/// Hazır prompt önerisi: tıklanınca metin chat'e eklenir, X ile çıkarılır.
+class _PromptPreset {
+  final String id;
+  final String label;
+  final String text;
+  final IconData icon;
+  const _PromptPreset(this.id, this.label, this.text, this.icon);
+}
+
 class _AiImageGeneratorSheetState extends State<AiImageGeneratorSheet> {
   final _promptController = TextEditingController();
   int _numImages = 1;
@@ -637,6 +646,29 @@ class _AiImageGeneratorSheetState extends State<AiImageGeneratorSheet> {
   bool _isGenerating = false;
   String? _errorMessage;
   List<MediaItem> _selectedRefs = [];
+
+  /// Prompt'a eklenmiş (aktif) hazır öneriler — metin içeriğinden türetilir.
+  final Set<String> _activePresets = {};
+
+  // Ürün fotoğrafçılığı için hazır prompt önerileri.
+  static const _promptPresets = [
+    _PromptPreset('studio', 'Stüdyo çekimi',
+        'beyaz fonda profesyonel stüdyo ışığıyla çekilmiş ürün fotoğrafı', Icons.lightbulb_outline),
+    _PromptPreset('box', 'Kutuyla sergile',
+        'ürün şık bir kutu ambalajının yanında sergileniyor', Icons.inventory_2_outlined),
+    _PromptPreset('mannequin', 'Manken üzerinde',
+        'ürün bir manken üzerinde sergileniyor', Icons.accessibility_new),
+    _PromptPreset('lifestyle', 'Yaşam tarzı sahnesi',
+        'ürün gerçek bir kullanım ortamında, yaşam tarzı sahnesinde gösteriliyor', Icons.weekend_outlined),
+    _PromptPreset('flatlay', 'Üstten (flat-lay)',
+        'üstten çekim, düz zemine yerleştirilmiş flat-lay kompozisyon', Icons.grid_on),
+    _PromptPreset('closeup', 'Yakın detay',
+        'ürünün dokusunu vurgulayan yakın çekim makro detay', Icons.zoom_in),
+    _PromptPreset('daylight', 'Doğal ışık',
+        'yumuşak doğal gün ışığında, sıcak tonlu fotoğraf', Icons.wb_sunny_outlined),
+    _PromptPreset('marble', 'Mermer zemin',
+        'mermer zemin üzerinde minimal ve şık kompozisyon', Icons.texture),
+  ];
 
   static const _qualityOptions = [
     _QualityOption('low', 'Hızlı', 'En uygun maliyet, taslak için ideal', Icons.bolt),
@@ -651,9 +683,64 @@ class _AiImageGeneratorSheetState extends State<AiImageGeneratorSheet> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Prompt metni değiştikçe hangi hazır önerilerin aktif olduğunu yeniden hesapla
+    // (kullanıcı metni elle silerse chip de pasifleşsin).
+    _promptController.addListener(_syncPresetsFromText);
+  }
+
+  @override
   void dispose() {
+    _promptController.removeListener(_syncPresetsFromText);
     _promptController.dispose();
     super.dispose();
+  }
+
+  /// Prompt içeriğine göre aktif önerileri türet.
+  void _syncPresetsFromText() {
+    final text = _promptController.text;
+    final next = _promptPresets.where((p) => text.contains(p.text)).map((p) => p.id).toSet();
+    if (next.length != _activePresets.length || !next.containsAll(_activePresets)) {
+      setState(() {
+        _activePresets
+          ..clear()
+          ..addAll(next);
+      });
+    }
+  }
+
+  /// Hazır öneri metnini prompt'un sonuna ekle.
+  void _addPreset(_PromptPreset p) {
+    if (_promptController.text.contains(p.text)) return;
+    final current = _promptController.text.trimRight();
+    final sep = current.isEmpty
+        ? ''
+        : (current.endsWith('.') || current.endsWith(',') ? ' ' : ', ');
+    final next = '$current$sep${p.text}';
+    _promptController.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+    // _syncPresetsFromText listener üzerinden aktif state güncellenir.
+  }
+
+  /// Hazır öneri metnini prompt'tan çıkar (yanındaki X).
+  void _removePreset(_PromptPreset p) {
+    var text = _promptController.text;
+    // Olası ayraçlarıyla birlikte temizle.
+    final patterns = [', ${p.text}', '. ${p.text}', '${p.text}, ', '${p.text}. ', ' ${p.text}', p.text];
+    for (final pat in patterns) {
+      if (text.contains(pat)) {
+        text = text.replaceFirst(pat, '');
+        break;
+      }
+    }
+    text = text.trim();
+    _promptController.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
   }
 
   Future<void> _selectReferences() async {
@@ -752,6 +839,13 @@ class _AiImageGeneratorSheetState extends State<AiImageGeneratorSheet> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                       ),
                     ),
+                    const SizedBox(height: 14),
+                    _sectionTitle(cs, Icons.auto_fix_high, 'Hazır öneriler'),
+                    const SizedBox(height: 4),
+                    Text('Bir öneriye dokun, metin otomatik eklensin. Eklenen önerinin yanındaki ✕ ile çıkarabilirsin.',
+                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                    const SizedBox(height: 10),
+                    _buildPresetChips(cs),
                     const SizedBox(height: 20),
                     _sectionTitle(cs, Icons.photo_library_outlined, 'Referans görseller', trailing: '${_selectedRefs.length}/4'),
                     const SizedBox(height: 4),
@@ -853,6 +947,37 @@ class _AiImageGeneratorSheetState extends State<AiImageGeneratorSheet> {
         if (trailing != null)
           Text(trailing, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
       ],
+    );
+  }
+
+  Widget _buildPresetChips(ColorScheme cs) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _promptPresets.map((p) {
+        final active = _activePresets.contains(p.id);
+        return InputChip(
+          label: Text(p.label),
+          labelStyle: TextStyle(
+            fontSize: 13,
+            color: active ? cs.onPrimaryContainer : cs.onSurface,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+          ),
+          avatar: Icon(p.icon, size: 16, color: active ? cs.onPrimaryContainer : cs.primary),
+          selected: active,
+          showCheckmark: false,
+          selectedColor: cs.primaryContainer,
+          backgroundColor: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+          side: BorderSide(color: active ? cs.primary : cs.outlineVariant),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          // Pasifken dokununca ekle; aktifken X (onDeleted) ile çıkar.
+          onPressed: _isGenerating ? null : (active ? null : () => _addPreset(p)),
+          onDeleted: (active && !_isGenerating) ? () => _removePreset(p) : null,
+          deleteIcon: const Icon(Icons.close, size: 16),
+          deleteIconColor: cs.onPrimaryContainer,
+          tooltip: active ? '${p.label} — kaldır' : p.text,
+        );
+      }).toList(),
     );
   }
 
