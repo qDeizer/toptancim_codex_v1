@@ -1,0 +1,14 @@
+# Git line ending ayarları
+* text=auto
+
+# Shell scriptleri Linux container'da çalışacağı için her zaman LF olmalı
+*.sh text eol=lf
+
+# SQL dosyaları da container'da çalışacak
+*.sql text eol=lf
+
+# Nginx conf
+nginx/nginx.conf text eol=lf
+
+# Dockerfile'lar
+Dockerfile text eol=lf
