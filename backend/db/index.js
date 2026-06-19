@@ -21,6 +21,12 @@ const pool = new Pool({
   ssl: useSsl ? { rejectUnauthorized: false } : false
 });
 
+// Boştaki bir bağlantı koptuğunda process'in çökmesini engelle;
+// pool bir sonraki sorguda yeni bağlantı açar
+pool.on('error', (err) => {
+  console.error('PG pool idle client error (yoksayıldı):', err.message);
+});
+
 module.exports = {
   // Tekil sorgular için
   query: (text, params) => pool.query(text, params),
