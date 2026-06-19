@@ -1,0 +1,118 @@
+# =============================================================================
+# Toptancım B2B — Docker Compose Yapılandırması
+# =============================================================================
+# Servisler:
+#   db       → PostgreSQL 17 (veritabanı)
+#   backend  → Node.js Express + Socket.IO (API sunucusu)
+#   nginx    → Nginx + Flutter Web (reverse proxy + frontend)
+#
+# Kullanım:
+#   docker compose --env-file .env.production up -d --build
+#
+# İlk çalıştırmada:
+#   docker compose --env-file .env.production exec backend node db/seed_demo.js
+# =============================================================================
+
+services:
+  # ─────────────────────────────────────────────
+  # PostgreSQL Veritabanı
+  # ─────────────────────────────────────────────
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD gerekli}
+      POSTGRES_DB: ${DB_DATABASE:-toptancimdb_codex}
+      TZ: Europe/Istanbul
+    volumes:
+      # Kalıcı veri
+      - pgdata:/var/lib/postgresql/data
+      # Başlatma scripti (sadece ilk oluşturmada çalışır)
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+      # SQL dosyalarını /sql/ altına mount et (init-db.sh bunları okur)
+      - ./backend/db:/sql:ro
+    ports:
+      # Geliştirme amaçlı — production'da kaldırılabilir
+      - "${DB_EXTERNAL_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_DATABASE:-toptancimdb_codex}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - toptancim-net
+
+  # ─────────────────────────────────────────────
+  # Node.js Backend (Express + Socket.IO)
+  # ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Veritabanı
+      DB_HOST: db
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD gerekli}
+      DB_DATABASE: ${DB_DATABASE:-toptancimdb_codex}
+      DB_PORT: 5432
+      DB_SSL: "false"
+      # Sunucu
+      NODE_ENV: production
+      PORT: 3002
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli}
+      # Uploads (container içi path)
+      UPLOADS_DIR: /app/uploads
+      # AI (Opsiyonel)
+      AI_PROVIDER: ${AI_PROVIDER:-GEMINI}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LOCAL_LLM_URL: ${LOCAL_LLM_URL:-}
+      TZ: Europe/Istanbul
+    volumes:
+      # Kullanıcı yüklemeleri (kalıcı)
+      - uploads:/app/uploads
+      # AI ayar dosyası (kalıcı, container restart'larında korunur)
+      - ai-config:/app/config
+    networks:
+      - toptancim-net
+
+  # ─────────────────────────────────────────────
+  # Nginx + Flutter Web Frontend
+  # ─────────────────────────────────────────────
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    networks:
+      - toptancim-net
+
+# =============================================================================
+# Docker Volumes (Kalıcı Veri)
+# =============================================================================
+volumes:
+  pgdata:
+    name: toptancim-pgdata
+  uploads:
+    name: toptancim-uploads
+  ai-config:
+    name: toptancim-ai-config
+
+# =============================================================================
+# Docker Network
+# =============================================================================
+networks:
+  toptancim-net:
+    name: toptancim-network
+    driver: bridge

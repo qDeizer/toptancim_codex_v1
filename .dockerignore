@@ -1,0 +1,42 @@
+# Root .dockerignore — Nginx/Frontend multi-stage build context için
+# (docker-compose'da nginx service'i context: . kullanır)
+
+.git
+.gitignore
+.claude/
+.agents/
+
+# Backend (nginx build'inde gerekmez — backend kendi Dockerfile'ını kullanır)
+backend/node_modules/
+backend/.env
+backend/uploads/products/*
+backend/uploads/profiles/*
+backend/uploads/media/*
+backend/.azure/
+backend/ml/__pycache__/
+
+# Frontend build artifacts (build sırasında yeniden oluşturulur)
+frontend/node_modules/
+frontend/build/
+frontend/.dart_tool/
+frontend/.idea/
+frontend/.pub-cache/
+frontend/.pub/
+frontend/android/
+frontend/ios/
+frontend/linux/
+frontend/macos/
+frontend/windows/
+frontend/test/
+
+# Genel
+*.log
+*.bat
+*.pyc
+__pycache__/
+tmp/
+docs/
+db/
+deploy_*.py
+ProjectSnapshot_v*.txt
+*.sql.bak

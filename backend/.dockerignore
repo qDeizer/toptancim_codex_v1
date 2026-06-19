@@ -1,0 +1,16 @@
+node_modules/
+npm-debug.log
+.env
+.env.*
+.git
+.gitignore
+uploads/products/*
+uploads/profiles/*
+uploads/media/*
+.azure/
+*.md
+*.bat
+*.sql.bak
+ml/__pycache__/
+test_*.js
+yedek.sql
